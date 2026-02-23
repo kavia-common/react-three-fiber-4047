@@ -1,6 +1,6 @@
 import { Environment, OrbitControls, useFBO, useGLTF } from '@react-three/drei'
 import { Canvas, ComputeFunction, createPortal, type ThreeElements, useFrame, useThree } from '@react-three/fiber'
-import { useCallback, useLayoutEffect, useRef, useState } from 'react'
+import { Suspense, useCallback, useLayoutEffect, useRef, useState } from 'react'
 import * as THREE from 'three'
 
 export function Lights() {
@@ -114,24 +114,36 @@ function Test() {
 export default function App() {
   return (
     <Canvas dpr={[1, 2]} camera={{ position: [0, 3, 7] }}>
-      <group position={[0, -1, 0]}>
-        <Lights />
-        {/* First layer, a portal */}
-        <Portal scale={[4, 5, 1]} position={[0, 2.5, 0]} rotation={[0, 0, 0]}>
+      {/* useGLTF/useFBO can suspend; without an in-canvas Suspense fallback this demo may appear blank. */}
+      <Suspense
+        fallback={
+          <group position={[0, 0, 0]}>
+            <ambientLight intensity={Math.PI / 2} />
+            <mesh>
+              <boxGeometry args={[1, 1, 1]} />
+              <meshStandardMaterial color="hotpink" />
+            </mesh>
+          </group>
+        }>
+        <group position={[0, -1, 0]}>
           <Lights />
-          <Farm scale={10} rotation={[0, 0, 0]} position={[-1, -2, -10]} />
-          <Soda scale={5} position={[2, -2, -1.5]} />
-          <Portal scale={[4, 5, 1]} position={[2, 0, -5]} rotation={[0, 0, 0]}>
-            <Test />
+          {/* First layer, a portal */}
+          <Portal scale={[4, 5, 1]} position={[0, 2.5, 0]} rotation={[0, 0, 0]}>
             <Lights />
-            <Soda scale={8} position={[0, -2, -1.5]} />
-            <Environment preset="city" background="only" />
+            <Farm scale={10} rotation={[0, 0, 0]} position={[-1, -2, -10]} />
+            <Soda scale={5} position={[2, -2, -1.5]} />
+            <Portal scale={[4, 5, 1]} position={[2, 0, -5]} rotation={[0, 0, 0]}>
+              <Test />
+              <Lights />
+              <Soda scale={8} position={[0, -2, -1.5]} />
+              <Environment preset="city" background="only" />
+            </Portal>
           </Portal>
-        </Portal>
-        <Ramen scale={4} position={[-2, 0, 2]} />
-        <Soda scale={5} position={[1.5, 0, 3]} />
-      </group>
-      <OrbitControls makeDefault />
+          <Ramen scale={4} position={[-2, 0, 2]} />
+          <Soda scale={5} position={[1.5, 0, 3]} />
+        </group>
+        <OrbitControls makeDefault />
+      </Suspense>
     </Canvas>
   )
 }
